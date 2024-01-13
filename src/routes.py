@@ -15,7 +15,7 @@ from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import session
-from flask_dance.contrib.google import google
+
 
 
 sentry_sdk.init(
@@ -106,8 +106,8 @@ Routes and Business login section
 
 """
 
-@app.route('/',methods=['GET','POST'])   
-def index():
+@app.route('/create',methods=['GET','POST'])   
+def create():
     form =PostForm()
     if request.method=='POST' and current_user.is_authenticated:
         if form.validate_on_submit():
@@ -125,6 +125,26 @@ def index():
         return redirect(url_for('index'))
     posts_list=Comment.query.filter(Comment.parent_id==None,Comment.is_deleted==False).order_by(Comment.created_at.desc()).all()
     return render_template('index.html',posts=posts_list,form=form)
+
+@app.route('/',methods=['GET','POST'])   
+def index():
+    form = PostForm()
+    if request.method=='POST' and current_user.is_authenticated:
+        if form.validate_on_submit():
+            title=form.title.data
+            content=form.content.data
+            post=Comment(title=title,content=content,author=current_user,parent=None)
+            db.session.add(post)
+            db.session.commit()
+            current_user.score=current_user.score+10
+            current_user.post_count=current_user.post_count+1
+            db.session.commit()
+            return redirect(url_for('index'))
+    if request.method=='POST' and current_user.is_authenticated==False:
+        flash('Login Required')
+        return redirect(url_for('index'))
+    posts_list=Comment.query.filter(Comment.parent_id==None,Comment.is_deleted==False).order_by(Comment.created_at.desc()).all()
+    return render_template('home.html',posts=posts_list,form=form)
 
 @app.route('/profile/<int:user_id>') 
 def profile(user_id):
@@ -256,3 +276,7 @@ def get_all_post():
         }
         data.append(post_list)
     return jsonify({"data":data})
+
+@app.route('/callback')
+def callback():
+    pass    

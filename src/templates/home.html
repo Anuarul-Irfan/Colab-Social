@@ -2,21 +2,22 @@
 {% block content %}
 <div class="container">
    <div class="col-sm-6">
-    <form method="POST" action="" enctype="multipart/form-data">
+    <a href="{{url_for('create')}}"><button method="POST" href="{{url_for('create')}}">Post +</button></a>
+    <!-- Remove the ability to add straight away, add the button above -->
+    <!-- <form method="POST" action="" enctype="multipart/form-data">
         {{ form.csrf_token }}
         {{ form.hidden_tag() }}
         {{form.title.label}}<br>{{ form.title(class="form-control")}}<br>
         {{ form.content(only_input=True, rows=10,cols=70,class="form-control") }}<br>
         {{ form.submit(class="btn w3-button w3-theme-d5") }}
-    </form>
+    </form> -->
 </div>
 <div class="col-sm-6">
-  <h3>Preview</h3>
-  {{ form.content(only_preview=True) }}
+  <!-- <h3>Preview</h3>
+  {{ form.content(only_preview=True) }} -->
 </div>
 </div>
-<!-- Remove the Postings here -->
-<!-- {% for post in posts %}
+{% for post in posts %}
 <div class="container">
 <div class="w3-container w3-card w3-white w3-round w3-margin"><br>
   <a href="{{url_for('post_detail', post_id=post.id) }}" style="text-decoration: none; color: black;"><h2>{{post.title}}</h2></a>
@@ -32,5 +33,5 @@
         <a href="{{url_for('post_detail', post_id=post.id) }}" style="text-decoration: none; color: white;"><button type="button" class="w3-button w3-theme-d5 w3-margin-bottom" ><i class="fa fa-comment"></i> Comment</button></a> 
   </div>
 </div>
-{%endfor%} -->
+{%endfor%}
 {%endblock%}

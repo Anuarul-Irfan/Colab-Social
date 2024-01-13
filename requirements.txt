@@ -33,4 +33,4 @@ URLObject==2.4.3
 Werkzeug==0.16.1
 WTForms==2.2.1
 psycopg2==2.8.3
-
+psycopg2-binary==2.8.3
