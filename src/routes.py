@@ -14,6 +14,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from flask import session
+from flask_dance.contrib.google import google
 
 
 sentry_sdk.init(
@@ -25,7 +27,7 @@ sentry_sdk.init(
  Library initialzation and configurations Setups
 
 """
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 GOOGLE_CLIENT_ID=os.environ.get('CLIENT_ID')
 GOOGLE_CLIENT_SECRET=os.environ.get('CLIENT_SECRET')
 google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
@@ -90,8 +92,12 @@ def google_logged_in(blueprint, token):
 @app.route('/logout')
 @login_required
 def logout():
+    token = google.blueprint.token
+    if token is not None:
+        token.pop('access_token')
     logout_user()
-    return redirect(url_for('index'))  
+    session.clear()
+    return redirect(url_for('index'))   
 
 
 """
