@@ -31,8 +31,8 @@ sentry_sdk.init(
  Library initialization and configurations Setups
 """
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
-GOOGLE_CLIENT_ID=os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
-GOOGLE_CLIENT_SECRET=os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
+GOOGLE_CLIENT_ID=os.environ.get('CLIENT_ID')
+GOOGLE_CLIENT_SECRET=os.environ.get('CLIENT_SECRET')
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 pagedown = PageDown(app)
