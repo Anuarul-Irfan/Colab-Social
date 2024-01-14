@@ -1,8 +1,10 @@
+#model.py
+
 import enum
 from src import db
 from datetime import datetime
+from flask_dance.consumer.storage.sqla import OAuthConsumerMixin
 from flask_login import UserMixin
-import requests
 
 """
     Blueprint of the database schema   
@@ -54,11 +56,8 @@ class User(UserMixin,db.Model):
             }
             
 
-class OAuth(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    provider = db.Column(db.String(50), nullable=False)
+class OAuth(OAuthConsumerMixin, db.Model):
     provider_user_id = db.Column(db.String(256), unique=True)
-    token = db.Column(db.JSON)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     user = db.relationship(User)
 
