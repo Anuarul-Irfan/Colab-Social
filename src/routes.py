@@ -15,7 +15,7 @@ from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import session
-import request
+
 
 
 
@@ -55,7 +55,7 @@ def login():
         query_params = {
             'response_type': 'code',
             'client_id': GOOGLE_CLIENT_ID,
-            'redirect_uri': 'https://yourdomain.com/oauth2callback',
+            'redirect_uri': 'https://nuarul.pythonanywhere.com/oauth2callbackoauth2callback',
             'scope': 'https://www.googleapis.com/auth/userinfo.email',
             'state': 'random_state_string',
         }
@@ -74,7 +74,7 @@ def google_oauth2_authcode_callback():
         'code': auth_code,
         'client_id': GOOGLE_CLIENT_ID,
         'client_secret': GOOGLE_CLIENT_SECRET,
-        'redirect_uri': 'https://nuarul.pythonanywhere.com//oauth2callback',
+        'redirect_uri': 'https://nuarul.pythonanywhere.com/oauth2callback',
     }
 
     result = requests.post(oauth_link, data=post_params).json()
