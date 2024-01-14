@@ -74,16 +74,6 @@ def google_auth():
     return '<h1>Request failed!</h1>'
 
 
-@app.route('/logout')
-@login_required
-def logout():
-    token = google.blueprint.token
-    if token is not None:
-        token.pop('access_token')
-    logout_user()
-    session.clear()
-    return redirect(url_for('index'))   
-
 
 """
 
