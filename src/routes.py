@@ -27,7 +27,7 @@ sentry_sdk.init(
  Library initialzation and configurations Setups
 
 """
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 GOOGLE_CLIENT_ID=os.environ.get('936649164386-005qv70d2iq0c55lhhh2p4tua6v3ehdq.apps.googleusercontent.com')
 GOOGLE_CLIENT_SECRET=os.environ.get('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')
 google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
