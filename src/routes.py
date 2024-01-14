@@ -15,6 +15,9 @@ from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import session
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 
