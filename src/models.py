@@ -1,3 +1,5 @@
+#model.py
+
 import enum
 from src import db
 from datetime import datetime
@@ -29,7 +31,6 @@ class User(UserMixin,db.Model):
     deleted_at=db.Column(db.DateTime(),nullable=False,default=datetime.now())
     is_deleted=db.Column(db.Boolean,default=False)
     comment=db.relationship('Comment',backref='author',lazy=False)
-    oauth = db.relationship('OAuth', backref='user', uselist=False)
 
     def __str__(self):
         return f"User('{self.name}')"
