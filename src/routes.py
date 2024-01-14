@@ -15,10 +15,6 @@ from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import session
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 
 
@@ -28,22 +24,31 @@ sentry_sdk.init(
 )
 
 """
- Library initialization and configurations Setups
+ Library initialzation and configurations Setups
+
 """
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
-GOOGLE_CLIENT_ID=os.environ.get('CLIENT_ID')
-GOOGLE_CLIENT_SECRET=os.environ.get('CLIENT_SECRET')
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
+GOOGLE_CLIENT_ID=os.environ.get('936649164386-005qv70d2iq0c55lhhh2p4tua6v3ehdq.apps.googleusercontent.com')
+GOOGLE_CLIENT_SECRET=os.environ.get('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')
+google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
+app.register_blueprint(google_blueprint, url_prefix='/login')
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 pagedown = PageDown(app)
 markdown=Markdown(app)
 
+
+
 """
    Google authentication and authorization Section
+ 
 """
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+google_blueprint.backend = SQLAlchemyStorage(OAuth, db.session, user=current_user)
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
@@ -51,51 +56,25 @@ def unauthorized_handler():
 
 @app.route("/login")
 def login():
-    if current_user.is_authenticated:
-        return redirect(request.referrer)
-    else:
-        redirect_url = 'https://accounts.google.com/o/oauth2/auth'
-        query_params = {
-            'response_type': 'code',
-            'client_id': GOOGLE_CLIENT_ID,
-            'redirect_uri': 'https://nuarul.pythonanywhere.com/login/oauth2callback',
-            'scope': 'https://www.googleapis.com/auth/userinfo.email',
-            'state': 'random_state_string',
-        }
-        final_url = requests.Request('GET', url=redirect_url, params=query_params).prepare().url
-        return redirect(final_url)
+    condition= current_user.is_authenticated and google.authorized
+    if not condition:
+        return redirect(url_for('google.login'))
+    return redirect(request.referrer)
 
-@app.route('/oauth2callback')
-def google_oauth2_authcode_callback():
-    if 'error' in request.args:
-        return Response('Error occurred during authentication')
-
-    auth_code = request.args['code']
-    oauth_link = 'https://accounts.google.com/o/oauth2/token'
-    post_params = {
-        'grant_type': 'authorization_code',
-        'code': auth_code,
-        'client_id': GOOGLE_CLIENT_ID,
-        'client_secret': GOOGLE_CLIENT_SECRET,
-        'redirect_uri': 'https://nuarul.pythonanywhere.com/login/oauth2callback',
-    }
-
-    result = requests.post(oauth_link, data=post_params).json()
-    access_token = result['access_token']
-
-    google_plus_user_info_api = 'https://www.googleapis.com/userinfo/v2/me'
-    hidden_headers = {'Authorization': 'Bearer {}'.format(access_token)}
-    user_info = requests.get(google_plus_user_info_api, headers=hidden_headers).json()
-
+@oauth_authorized.connect_via(google_blueprint)
+def google_logged_in(blueprint, token):
+    resp = blueprint.session.get('/oauth2/v2/userinfo')
+    user_info = resp.json()
     user_id = str(user_info['id'])
-    query = OAuth.query.filter_by(provider='google', provider_user_id=user_id)
+    query = OAuth.query.filter_by(provider=blueprint.name,
+                                  provider_user_id=user_id)
     try:
         oauth = query.one()
     except NoResultFound:
         oauth = OAuth(
-            provider='google',
+            provider=blueprint.name,
             provider_user_id=user_id,
-            token=result,
+            token=token,
         )
     if oauth.user:
         login_user(oauth.user)
@@ -107,11 +86,15 @@ def google_oauth2_authcode_callback():
         db.session.commit()
         login_user(user)
         print("Successfully signed in with Google.")
-    return redirect(url_for('index'))
+    return False
+
 
 @app.route('/logout')
 @login_required
 def logout():
+    token = google.blueprint.token
+    if token is not None:
+        token.pop('access_token')
     logout_user()
     session.clear()
     return redirect(url_for('index'))   
