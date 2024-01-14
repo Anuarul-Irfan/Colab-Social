@@ -31,8 +31,8 @@ sentry_sdk.init(
  Library initialization and configurations Setups
 """
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
-GOOGLE_CLIENT_ID=os.environ.get('936649164386-005qv70d2iq0c55lhhh2p4tua6v3ehdq.apps.googleusercontent.com')
-GOOGLE_CLIENT_SECRET=os.environ.get('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')
+GOOGLE_CLIENT_ID=os.environ.get('GOOGLE_OAUTH_CLIENT_ID')
+GOOGLE_CLIENT_SECRET=os.environ.get('GOOGLE_OAUTH_CLIENT_SECRET')
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 pagedown = PageDown(app)
@@ -58,7 +58,7 @@ def login():
         query_params = {
             'response_type': 'code',
             'client_id': GOOGLE_CLIENT_ID,
-            'redirect_uri': 'https://nuarul.pythonanywhere.com/oauth2callbackoauth2callback',
+            'redirect_uri': 'https://nuarul.pythonanywhere.com/oauth2callback',
             'scope': 'https://www.googleapis.com/auth/userinfo.email',
             'state': 'random_state_string',
         }
