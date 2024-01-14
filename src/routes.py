@@ -15,6 +15,10 @@ from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import session
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 
 
@@ -24,55 +28,93 @@ sentry_sdk.init(
 )
 
 """
- Library initialzation and configurations Setups
-
+ Library initialization and configurations Setups
 """
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
+#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 GOOGLE_CLIENT_ID=os.environ.get('CLIENT_ID')
 GOOGLE_CLIENT_SECRET=os.environ.get('CLIENT_SECRET')
-google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
-app.register_blueprint(google_blueprint, url_prefix='/login')
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 pagedown = PageDown(app)
 markdown=Markdown(app)
 
+"""
+   Google authentication and authorization Section
+"""
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-google_blueprint.backend = SQLAlchemyStorage(OAuth, db.session, user=current_user)
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     return '<h2 style="color:red">You not authorized to visit this page, 401 <h2>'
 
-@app.route("/google_auth")
-def google_auth():
-    if not google.authorized:
-        return redirect(url_for("google.login"))
-    resp = google.get("/oauth2/v1/userinfo")
-    if resp.ok:
-        user_info = resp.json()
-        user_id = str(user_info["id"])
-        query = OAuth.query.filter_by(provider=google_blueprint.name, provider_user_id=user_id)
-        try:
-            oauth = query.one()
-        except NoResultFound:
-            oauth = OAuth(provider=google_blueprint.name, provider_user_id=user_id, token=(resp.json())["access_token"])
-        if oauth.user:
-            login_user(oauth.user)
-            print("Successfully signed in with Google.")
-        else:
-            user = User(email=user_info["email"], name=user_info["name"], picture=user_info["picture"], user_type=UserTypeEnum.CASUAL)
-            oauth.user = user
-            db.session.add_all([user, oauth])
-            db.session.commit()
-            login_user(user)
-            print("Successfully signed in with Google.")
-        return redirect(url_for("index"))
-    return '<h1>Request failed!</h1>'
+@app.route("/login")
+def login():
+    if current_user.is_authenticated:
+        return redirect(request.referrer)
+    else:
+        redirect_url = 'https://accounts.google.com/o/oauth2/auth'
+        query_params = {
+            'response_type': 'code',
+            'client_id': GOOGLE_CLIENT_ID,
+            'redirect_uri': 'https://nuarul.pythonanywhere.com/login/oauth2callback',
+            'scope': 'https://www.googleapis.com/auth/userinfo.email',
+            'state': 'random_state_string',
+        }
+        final_url = requests.Request('GET', url=redirect_url, params=query_params).prepare().url
+        return redirect(final_url)
 
+@app.route('/oauth2callback')
+def google_oauth2_authcode_callback():
+    if 'error' in request.args:
+        return Response('Error occurred during authentication')
+
+    auth_code = request.args['code']
+    oauth_link = 'https://accounts.google.com/o/oauth2/token'
+    post_params = {
+        'grant_type': 'authorization_code',
+        'code': auth_code,
+        'client_id': GOOGLE_CLIENT_ID,
+        'client_secret': GOOGLE_CLIENT_SECRET,
+        'redirect_uri': 'https://nuarul.pythonanywhere.com/login/oauth2callback',
+    }
+
+    result = requests.post(oauth_link, data=post_params).json()
+    access_token = result['access_token']
+
+    google_plus_user_info_api = 'https://www.googleapis.com/userinfo/v2/me'
+    hidden_headers = {'Authorization': 'Bearer {}'.format(access_token)}
+    user_info = requests.get(google_plus_user_info_api, headers=hidden_headers).json()
+
+    user_id = str(user_info['id'])
+    query = OAuth.query.filter_by(provider='google', provider_user_id=user_id)
+    try:
+        oauth = query.one()
+    except NoResultFound:
+        oauth = OAuth(
+            provider='google',
+            provider_user_id=user_id,
+            token=result,
+        )
+    if oauth.user:
+        login_user(oauth.user)
+        print("Successfully signed in with Google")
+    else:
+        user = User(name=user_info["name"],picture=user_info["picture"],user_type=UserTypeEnum.CASUAL)
+        oauth.user = user
+        db.session.add_all([user, oauth])
+        db.session.commit()
+        login_user(user)
+        print("Successfully signed in with Google.")
+    return redirect(url_for('index'))
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    session.clear()
+    return redirect(url_for('index'))   
 
 
 """
