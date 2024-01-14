@@ -37,13 +37,6 @@ login_manager.init_app(app)
 pagedown = PageDown(app)
 markdown=Markdown(app)
 
-
-
-"""
-   Google authentication and authorization Section
- 
-"""
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -54,39 +47,31 @@ google_blueprint.backend = SQLAlchemyStorage(OAuth, db.session, user=current_use
 def unauthorized_handler():
     return '<h2 style="color:red">You not authorized to visit this page, 401 <h2>'
 
-@app.route("/login")
-def login():
-    condition= current_user.is_authenticated and google.authorized
-    if not condition:
-        return redirect(url_for('google.login'))
-    return redirect(request.referrer)
-
-@oauth_authorized.connect_via(google_blueprint)
-def google_logged_in(blueprint, token):
-    resp = blueprint.session.get('/oauth2/v2/userinfo')
-    user_info = resp.json()
-    user_id = str(user_info['id'])
-    query = OAuth.query.filter_by(provider=blueprint.name,
-                                  provider_user_id=user_id)
-    try:
-        oauth = query.one()
-    except NoResultFound:
-        oauth = OAuth(
-            provider=blueprint.name,
-            provider_user_id=user_id,
-            token=token,
-        )
-    if oauth.user:
-        login_user(oauth.user)
-        print("Successfully signed in with Google")
-    else:
-        user = User(name=user_info["name"],picture=user_info["picture"],user_type=UserTypeEnum.CASUAL)
-        oauth.user = user
-        db.session.add_all([user, oauth])
-        db.session.commit()
-        login_user(user)
-        print("Successfully signed in with Google.")
-    return False
+@app.route("/google_auth")
+def google_auth():
+    if not google.authorized:
+        return redirect(url_for("google.login"))
+    resp = google.get("/oauth2/v1/userinfo")
+    if resp.ok:
+        user_info = resp.json()
+        user_id = str(user_info["id"])
+        query = OAuth.query.filter_by(provider=google_blueprint.name, provider_user_id=user_id)
+        try:
+            oauth = query.one()
+        except NoResultFound:
+            oauth = OAuth(provider=google_blueprint.name, provider_user_id=user_id, token=(resp.json())["access_token"])
+        if oauth.user:
+            login_user(oauth.user)
+            print("Successfully signed in with Google.")
+        else:
+            user = User(email=user_info["email"], name=user_info["name"], picture=user_info["picture"], user_type=UserTypeEnum.CASUAL)
+            oauth.user = user
+            db.session.add_all([user, oauth])
+            db.session.commit()
+            login_user(user)
+            print("Successfully signed in with Google.")
+        return redirect(url_for("index"))
+    return '<h1>Request failed!</h1>'
 
 
 @app.route('/logout')
