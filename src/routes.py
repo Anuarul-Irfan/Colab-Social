@@ -58,7 +58,7 @@ def login():
         query_params = {
             'response_type': 'code',
             'client_id': GOOGLE_CLIENT_ID,
-            'redirect_uri': 'https://nuarul.pythonanywhere.com/login/api/auth/callback/google/authorized',
+            'redirect_uri': 'https://nuarul.pythonanywhere.com/login/oauth2callback',
             'scope': 'https://www.googleapis.com/auth/userinfo.email',
             'state': 'random_state_string',
         }
@@ -77,7 +77,7 @@ def google_oauth2_authcode_callback():
         'code': auth_code,
         'client_id': GOOGLE_CLIENT_ID,
         'client_secret': GOOGLE_CLIENT_SECRET,
-        'redirect_uri': 'https://nuarul.pythonanywhere.com/login/api/auth/callback/google/authorized',
+        'redirect_uri': 'https://nuarul.pythonanywhere.com/login/oauth2callback',
     }
 
     result = requests.post(oauth_link, data=post_params).json()
