@@ -16,6 +16,9 @@ import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import Flask, session  # Add 'session' here
 
+@app.route('/')  # Homepage
+def home():
+    return render_template('homepage.html')
 
 sentry_sdk.init(
 
@@ -134,7 +137,7 @@ def create():
     posts_list=Comment.query.filter(Comment.parent_id==None,Comment.is_deleted==False).order_by(Comment.created_at.desc()).all()
     return render_template('index.html',posts=posts_list,form=form)
 
-@app.route('/',methods=['GET','POST'])   
+@app.route('/yo',methods=['GET','POST'])   
 def index():
     form = PostForm()
     if request.method=='POST' and current_user.is_authenticated:
