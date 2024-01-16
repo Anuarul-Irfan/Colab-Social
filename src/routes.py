@@ -14,8 +14,6 @@ from sqlalchemy.orm.exc import NoResultFound
 from flaskext.markdown import Markdown
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
-from flask import session
-
 
 
 sentry_sdk.init(
