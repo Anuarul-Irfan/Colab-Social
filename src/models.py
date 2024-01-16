@@ -1,5 +1,3 @@
-#model.py
-
 import enum
 from src import db
 from datetime import datetime
