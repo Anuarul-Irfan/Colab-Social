@@ -104,7 +104,7 @@ def logout():
     # Log out the user
     logout_user()
     # Redirect to the index page
-    return redirect(url_for('index'))   
+    return redirect(url_for('home'))   
  
  
 
