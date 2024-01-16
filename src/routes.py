@@ -25,22 +25,13 @@ sentry_sdk.init(
  Library initialzation and configurations Setups
 
 """
-#os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
 GOOGLE_CLIENT_ID=os.environ.get('CLIENT_ID')
 GOOGLE_CLIENT_SECRET=os.environ.get('CLIENT_SECRET')
-google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
+google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET, redirect_url='https://nuarul.pythonanywhere.com/login')
 app.register_blueprint(google_blueprint, url_prefix='/login')
 login_manager = LoginManager(app)
 login_manager.init_app(app)
-pagedown = PageDown(app)
-markdown=Markdown(app)
-
-
-
-"""
-   Google authentication and authorization Section
- 
-"""
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -52,40 +43,37 @@ google_blueprint.backend = SQLAlchemyStorage(OAuth, db.session, user=current_use
 def unauthorized_handler():
     return '<h2 style="color:red">You not authorized to visit this page, 401 <h2>'
 
-@app.route("/login")
-def login():
-    condition= current_user.is_authenticated and google.authorized
-    if not condition:
+@app.route('/')
+def redirect_to_google_oauth_login():
+    if not google.authorized:
         return redirect(url_for('google.login'))
     return redirect(request.referrer)
 
-@oauth_authorized.connect_via(google_blueprint)
-def google_logged_in(blueprint, token):
-    resp = blueprint.session.get('/oauth2/v2/userinfo')
-    user_info = resp.json()
-    user_id = str(user_info['id'])
-    query = OAuth.query.filter_by(provider=blueprint.name,
-                                  provider_user_id=user_id)
-    try:
-        oauth = query.one()
-    except NoResultFound:
-        oauth = OAuth(
-            provider=blueprint.name,
-            provider_user_id=user_id,
-            token=token,
-        )
-    if oauth.user:
-        login_user(oauth.user)
-        print("Successfully signed in with Google")
-    else:
-        user = User(name=user_info["name"],picture=user_info["picture"],user_type=UserTypeEnum.CASUAL)
-        oauth.user = user
-        db.session.add_all([user, oauth])
-        db.session.commit()
-        login_user(user)
-        print("Successfully signed in with Google.")
-    return False
+@app.route('/login')
+def google_oauth2_authcode_callback():
+    if 'error' in request.args:
+        return Response('oh so sad')
 
+    resp = google.get('/oauth2/v2/userinfo')
+    if resp.ok:
+        user_info = resp.json()
+        user_id = str(user_info['id'])
+        query = OAuth.query.filter_by(provider=google_blueprint.name, provider_user_id=user_id)
+        try:
+            oauth = query.one()
+        except NoResultFound:
+            oauth = OAuth(provider=google_blueprint.name, provider_user_id=user_id, token=resp.json())
+        if oauth.user:
+            login_user(oauth.user)
+            print("Successfully signed in with Google")
+        else:
+            user = User(name=user_info["name"], email=user_info["email"], profile_pic=user_info["picture"])
+            oauth.user = user
+            db.session.add_all([user, oauth])
+            db.session.commit()
+            login_user(user)
+            print("Successfully signed in with Google.")
+    return False
 
 @app.route('/logout')
 @login_required
