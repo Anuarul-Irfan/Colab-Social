@@ -17,73 +17,142 @@ from sentry_sdk.integrations.flask import FlaskIntegration
 
 
 sentry_sdk.init(
-    dsn="https://876ab5e99d654526bac15ea4206d59cf@sentry.io/2358653",
-    integrations=[FlaskIntegration()]
+
+  dsn="https://876ab5e99d654526bac15ea4206d59cf@sentry.io/2358653",
+
+  integrations=[FlaskIntegration()]
+
 )
 
+
+
 """
+
  Library initialzation and configurations Setups
 
+
+
 """
+
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = "1"
-GOOGLE_CLIENT_ID=os.environ.get('CLIENT_ID')
-GOOGLE_CLIENT_SECRET=os.environ.get('CLIENT_SECRET')
+
+GOOGLE_CLIENT_ID="936649164386-005qv70d2iq0c55lhhh2p4tua6v3ehdq.apps.googleusercontent.com" # replace with your actual client id
+
+GOOGLE_CLIENT_SECRET="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" # replace with your actual client secret
+
 google_blueprint = make_google_blueprint(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET, redirect_url='https://nuarul.pythonanywhere.com/login')
+
 app.register_blueprint(google_blueprint, url_prefix='/login')
+
 login_manager = LoginManager(app)
+
 login_manager.init_app(app)
 
+
+
 @login_manager.user_loader
+
 def load_user(user_id):
-    return User.query.get(int(user_id))
+
+  return User.query.get(int(user_id))
+
+
 
 google_blueprint.backend = SQLAlchemyStorage(OAuth, db.session, user=current_user)
 
+
+
 @login_manager.unauthorized_handler
+
 def unauthorized_handler():
-    return '<h2 style="color:red">You not authorized to visit this page, 401 <h2>'
+
+  return '<h2 style="color:red">You not authorized to visit this page, 401 <h2>'
+
+
 
 @app.route('/')
+
 def redirect_to_google_oauth_login():
-    if not google.authorized:
-        return redirect(url_for('google.login'))
-    return redirect(request.referrer)
+
+  if not google.authorized:
+
+    return redirect(url_for('google.login'))
+
+  return redirect(request.referrer)
+
+
 
 @app.route('/login')
-def google_oauth2_authcode_callback():
-    if 'error' in request.args:
-        return Response('oh so sad')
 
-    resp = google.get('/oauth2/v2/userinfo')
-    if resp.ok:
-        user_info = resp.json()
-        user_id = str(user_info['id'])
-        query = OAuth.query.filter_by(provider=google_blueprint.name, provider_user_id=user_id)
-        try:
-            oauth = query.one()
-        except NoResultFound:
-            oauth = OAuth(provider=google_blueprint.name, provider_user_id=user_id, token=resp.json())
-        if oauth.user:
-            login_user(oauth.user)
-            print("Successfully signed in with Google")
-        else:
-            user = User(name=user_info["name"], email=user_info["email"], profile_pic=user_info["picture"])
-            oauth.user = user
-            db.session.add_all([user, oauth])
-            db.session.commit()
-            login_user(user)
-            print("Successfully signed in with Google.")
-    return False
+def google_oauth2_authcode_callback():
+
+  if 'error' in request.args:
+
+    return Response('oh so sad')
+
+
+
+  resp = google.get('/oauth2/v2/userinfo')
+
+  if resp.ok:
+
+    user_info = resp.json()
+
+    user_id = str(user_info['id'])
+
+    query = OAuth.query.filter_by(provider=google_blueprint.name, provider_user_id=user_id)
+
+    try:
+
+      oauth = query.one()
+
+    except NoResultFound:
+
+      oauth = OAuth(provider=google_blueprint.name, provider_user_id=user_id, token=resp.json())
+
+    if oauth.user:
+
+      login_user(oauth.user)
+
+      print("Successfully signed in with Google")
+
+    else:
+
+      user = User(name=user_info["name"], email=user_info["email"], profile_pic=user_info["picture"])
+
+      oauth.user = user
+
+      db.session.add_all([user, oauth])
+
+      db.session.commit()
+
+      login_user(user)
+
+      print("Successfully signed in with Google.")
+
+  return False
+
+
 
 @app.route('/logout')
+
 @login_required
+
 def logout():
-    token = google.blueprint.token
-    if token is not None:
-        token.pop('access_token')
-    logout_user()
-    session.clear()
-    return redirect(url_for('index'))   
+
+  token = google.blueprint.token
+
+  if token is not None:
+
+    token.pop('access_token')
+
+  logout_user()
+
+  session.clear()
+
+  return redirect(url_for('index'))  
+
+
 
 
 """
