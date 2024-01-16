@@ -97,10 +97,11 @@ def google_logged_in(blueprint, token):
 def logout():
     token = google.blueprint.token
     if token is not None:
-        token.pop('access_token')
+        token.clear()  # Clear the entire token dictionary
     logout_user()
     session.clear()
     return redirect(url_for('index'))   
+ 
 
 
 
