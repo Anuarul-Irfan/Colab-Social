@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'layout_base.html' %}
+{% block content %}
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -29,10 +29,12 @@
                         <p class="text-white-75 mb-5">Welcome to Click & Connect, your premier destination for meaningful online discussions and community engagement! At
                         Click & Connect, we've created a dynamic and user-friendly forum where individuals from all walks of life come together
                         to share ideas, insights, and experiences.!</p>
+                        {% if not current_user.is_authenticated %}
                         <a class="btn btn-primary btn-xl" href="{{ url_for('login') }}">LOG IN NOW!!</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </header>
     </body>
-</html>
+{% endblock%}
