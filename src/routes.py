@@ -95,12 +95,13 @@ def google_logged_in(blueprint, token):
 @app.route('/logout')
 @login_required
 def logout():
-    token = google.blueprint.token
-    if token is not None:
-        token.clear()  # Clear the entire token dictionary
-    logout_user()
+    # Clear the session
     session.clear()
+    # Log out the user
+    logout_user()
+    # Redirect to the index page
     return redirect(url_for('index'))   
+ 
  
 
 
