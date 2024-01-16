@@ -66,7 +66,7 @@ def login():
     condition= current_user.is_authenticated and google.authorized
     if not condition:
         return redirect(url_for('google.login'))
-    return redirect(url_for(request.referrer or url_for('index'))
+    return redirect(url_for(request.referrer)
 
 @oauth_authorized.connect_via(google_blueprint)
 def google_logged_in(blueprint, token):
@@ -93,7 +93,8 @@ def google_logged_in(blueprint, token):
         db.session.commit()
         login_user(user)
         print("Successfully signed in with Google.")
-    return False
+    return redirect(url_for('index'))  # Redirect to 'home' after successful login
+
 
 
 @app.route('/logout')
