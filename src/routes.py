@@ -206,6 +206,10 @@ def upvote(post_id):
     flash('You have already upvoted')
     return redirect(request.referrer)
 
+@app.route('/conctact')
+def contact():
+    return render_template('contact.html')
+
 
    
 
