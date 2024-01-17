@@ -39,7 +39,7 @@
             <ul class="nav navbar-nav" style="height: 75px; align-content: center; text-align: center;">
               <li><a class="navbar-brand" href="{{url_for('index')}}"><img src="{{url_for('static', filename='logo.png')}}" style="max-width: 100PX; max-height: 100px;"></a></li>
               <li><a href="{{ url_for('trending_page') }}"><i class="bi bi-graph-up-arrow"></i><br>Trending <span class="sr-only">(current)</span></a></li>
-              <li><a class="nav-link text-white" href="#"><i class="bi bi-telephone-fill"></i><br>Contact</a></li>
+              <li><a class="nav-link text-white" href="{{ url_for('contact')}}"><i class="bi bi-telephone-fill"></i><br>Contact</a></li>
               {% if current_user.is_authenticated %}
               <li><a href="{{ url_for('profile' , user_id=current_user.id ) }}"><i class="bi bi-person-circle"></i><br>Profile</a></li>
               {%endif%}
