@@ -146,7 +146,7 @@ def index():
         if form.validate_on_submit():
             title=form.title.data
             content=form.content.data
-            post=Comment(title=title,content=content,author=current_user,parent=None)
+            post=Comment(title=title,content=content,author=current_user,parent=None).order_by(Comment.created_at.desc()).all()
             db.session.add(post)
             db.session.commit()
             current_user.score=current_user.score+10
